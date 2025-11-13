@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+    # 1. Serviço PHP (Laravel)
+    php: # Use "php" como nome do serviço para corresponder ao Nginx
+        build:
+            context: .
+            dockerfile: Dockerfile
+        volumes:
+            - ./:/var/www
+        networks:
+            - laravel-net
+
+    # 2. Serviço Servidor Web (Nginx)
+    nginx:
+        image: nginx:alpine
+        ports:
+            - "8000:80"
+        volumes:
+            - ./:/var/www
+            - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+        depends_on:
+            - php
+        networks:
+            - laravel-net
+
+    # 3. Serviço Banco de Dados (MySQL)
+    db:
+        image: mysql:8.0
+        environment:
+            MYSQL_DATABASE: laravel_db
+            MYSQL_ROOT_PASSWORD: root
+        volumes:
+            - dbdata:/var/lib/mysql
+        networks:
+            - laravel-net
+        # Se precisar mapear a porta:
+        # ports:
+        #   - "3306:3306"
+
+networks:
+    laravel-net:
+        driver: bridge
+
+volumes:
+    dbdata:
+        driver: local
